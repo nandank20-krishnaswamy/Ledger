@@ -35,5 +35,7 @@ Categories — edit the <select id="category"> options in ledger.html
 Colors / fonts — tweak the CSS custom properties at the top of the <style> block (--ink, --gold, --income, --expense, etc.)
 Currency — update the fmt() function in the <script> block
 License
+<img width="900" height="1000" alt="AdobeExpressPhotos_6b60e4312b6c4eb0baf70ce439ddf617_CopyEdited" src="https://github.com/user-attachments/assets/84d970ee-d609-4e52-8efd-fbb98f96d820" />
+
 
 MIT — use it, fork it, adapt it.
