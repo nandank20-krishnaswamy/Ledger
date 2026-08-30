@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ledger — Personal Finance Tracker</title>
+    <style>
+      :root {
+        --paper: #faf7f0;
+        --paper-line: #e4dcc8;
+        --ink: #1b2a4a;
+        --ink-soft: #4a5a78;
+        --gold: #b8862f;
+        --income: #2f6b4f;
+        --expense: #a63d40;
+        --shadow: rgba(27, 42, 74, 0.08);
+        --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+        --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --font-mono:
+          "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: repeating-linear-gradient(
+          var(--paper),
+          var(--paper) 34px,
+          var(--paper-line) 35px
+        );
+        background-color: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-body);
+        padding: 32px 20px 80px;
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 820px;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        border-bottom: 3px double var(--ink);
+        padding-bottom: 14px;
+        margin-bottom: 28px;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-size: 2.1rem;
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+      .eyebrow {
+        font-size: 0.72rem;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .balance-block {
+        text-align: right;
+      }
+      .balance-label {
+        font-size: 0.72rem;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+      }
+      .balance-figure {
+        font-family: var(--font-mono);
+        font-size: 1.9rem;
+        font-weight: 700;
+      }
+      .balance-figure.negative {
+        color: var(--expense);
+      }
+      .balance-figure.positive {
+        color: var(--income);
+      }
+
+      .panel {
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid var(--paper-line);
+        border-radius: 2px;
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px var(--shadow);
+      }
+      .panel h2 {
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        margin: 0 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .panel h2::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--gold);
+        display: inline-block;
+        transform: rotate(45deg);
+      }
+
+      form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 10px;
+        align-items: end;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--ink-soft);
+      }
+      input,
+      select {
+        font-family: var(--font-body);
+        font-size: 0.92rem;
+        padding: 8px 10px;
+        border: 1px solid var(--paper-line);
+        background: #fff;
+        border-radius: 2px;
+        color: var(--ink);
+      }
+      input:focus,
+      select:focus {
+        outline: 2px solid var(--gold);
+        outline-offset: 1px;
+      }
+      .type-toggle {
+        display: flex;
+        border: 1px solid var(--paper-line);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .type-toggle button {
+        flex: 1;
+        border: none;
+        background: #fff;
+        padding: 8px 10px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: var(--ink-soft);
+        font-family: var(--font-body);
+      }
+      .type-toggle button.active[data-type="income"] {
+        background: var(--income);
+        color: #fff;
+      }
+      .type-toggle button.active[data-type="expense"] {
+        background: var(--expense);
+        color: #fff;
+      }
+      .add-btn {
+        background: var(--ink);
+        color: #fff;
+        border: none;
+        padding: 9px 20px;
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 2px;
+        cursor: pointer;
+        height: 38px;
+      }
+      .add-btn:hover {
+        background: var(--ink-soft);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: var(--font-mono);
+        font-size: 0.88rem;
+      }
+      thead th {
+        text-align: left;
+        font-family: var(--font-body);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--ink-soft);
+        border-bottom: 2px solid var(--ink);
+        padding: 6px 8px;
+      }
+      tbody td {
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--paper-line);
+      }
+      tbody tr:hover {
+        background: rgba(184, 134, 47, 0.06);
+      }
+      .amt {
+        text-align: right;
+        font-weight: 600;
+      }
+      .amt.income {
+        color: var(--income);
+      }
+      .amt.expense {
+        color: var(--expense);
+      }
+      .cat-tag {
+        font-family: var(--font-body);
+        font-size: 0.72rem;
+        background: var(--paper-line);
+        padding: 2px 8px;
+        border-radius: 10px;
+        color: var(--ink-soft);
+      }
+      .del-btn {
+        background: none;
+        border: none;
+        color: var(--ink-soft);
+        cursor: pointer;
+        font-size: 0.9rem;
+        opacity: 0.5;
+      }
+      .del-btn:hover {
+        opacity: 1;
+        color: var(--expense);
+      }
+      .empty {
+        text-align: center;
+        padding: 30px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      .bars {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 70px;
+        align-items: center;
+        gap: 10px;
+      }
+      .bar-label {
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+      }
+      .bar-track {
+        background: var(--paper-line);
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        background: var(--expense);
+        border-radius: 5px;
+        transition: width 0.4s ease;
+      }
+      .bar-value {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        text-align: right;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 0.75rem;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+      @media (max-width: 640px) {
+        form {
+          grid-template-columns: 1fr 1fr;
+        }
+        .add-btn {
+          grid-column: span 2;
+        }
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .balance-block {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <div class="eyebrow">Book I · Current Ledger</div>
+          <h1>Ledger</h1>
+        </div>
+        <div class="balance-block">
+          <div class="balance-label">Net Balance</div>
+          <div class="balance-figure" id="balanceFigure">$0.00</div>
+        </div>
+      </header>
+
+      <div class="panel">
+        <h2>Record an entry</h2>
+        <form id="entryForm">
+          <div class="field">
+            <label>Description</label>
+            <input
+              type="text"
+              id="desc"
+              placeholder="e.g. Coffee, Freelance payment"
+              required
+            />
+          </div>
+          <div class="field">
+            <label>Amount</label>
+            <input
+              type="number"
+              id="amount"
+              placeholder="0.00"
+              step="0.01"
+              min="0.01"
+              required
+            />
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select id="category">
+              <option>Food</option>
+              <option>Transport</option>
+              <option>Housing</option>
+              <option>Utilities</option>
+              <option>Entertainment</option>
+              <option>Income</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field" style="grid-column: 1/-1; max-width: 220px">
+            <label>Type</label>
+            <div class="type-toggle">
+              <button type="button" data-type="expense" class="active">
+                Expense
+              </button>
+              <button type="button" data-type="income">Income</button>
+            </div>
+          </div>
+          <button type="submit" class="add-btn">Add entry</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Transactions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Category</th>
+              <th style="text-align: right">Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="txBody"></tbody>
+        </table>
+        <div class="empty" id="emptyState" style="display: none">
+          No entries yet — add your first transaction above.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Spending by category</h2>
+        <div class="bars" id="bars"></div>
+      </div>
+
+      <footer>
+        Figures are held in this session only and reset on reload.
+      </footer>
+    </div>
+
+    <script>
+      let transactions = [];
+      let currentType = "expense";
+      let idCounter = 1;
+
+      const form = document.getElementById("entryForm");
+      const descInput = document.getElementById("desc");
+      const amountInput = document.getElementById("amount");
+      const categoryInput = document.getElementById("category");
+      const txBody = document.getElementById("txBody");
+      const emptyState = document.getElementById("emptyState");
+      const balanceFigure = document.getElementById("balanceFigure");
+      const barsEl = document.getElementById("bars");
+
+      document.querySelectorAll(".type-toggle button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".type-toggle button")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentType = btn.dataset.type;
+          if (currentType === "income") {
+            categoryInput.value = "Income";
+          }
+        });
+      });
+
+      function fmt(n) {
+        const sign = n < 0 ? "-" : "";
+        return sign + "$" + Math.abs(n).toFixed(2);
+      }
+
+      function render() {
+        txBody.innerHTML = "";
+        emptyState.style.display = transactions.length ? "none" : "block";
+
+        let balance = 0;
+        const catTotals = {};
+
+        // newest first
+        [...transactions].reverse().forEach((tx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+        <td>${tx.desc}</td>
+        <td><span class="cat-tag">${tx.category}</span></td>
+        <td class="amt ${tx.type}">${tx.type === "income" ? "+" : "−"}${fmt(Math.abs(tx.amount)).replace("-", "")}</td>
+        <td><button class="del-btn" data-id="${tx.id}" title="Delete">✕</button></td>
+      `;
+          txBody.appendChild(tr);
+        });
+
+        transactions.forEach((tx) => {
+          balance += tx.type === "income" ? tx.amount : -tx.amount;
+          if (tx.type === "expense") {
+            catTotals[tx.category] = (catTotals[tx.category] || 0) + tx.amount;
+          }
+        });
+
+        balanceFigure.textContent = fmt(balance);
+        balanceFigure.className =
+          "balance-figure " + (balance < 0 ? "negative" : "positive");
+
+        const maxCat = Math.max(1, ...Object.values(catTotals));
+        barsEl.innerHTML = "";
+        const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+        if (sorted.length === 0) {
+          barsEl.innerHTML =
+            '<div class="empty" style="padding:10px;">No expenses recorded yet.</div>';
+        } else {
+          sorted.forEach(([cat, total]) => {
+            const row = document.createElement("div");
+            row.className = "bar-row";
+            row.innerHTML = `
+          <div class="bar-label">${cat}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${((total / maxCat) * 100).toFixed(1)}%"></div></div>
+          <div class="bar-value">${fmt(total)}</div>
+        `;
+            barsEl.appendChild(row);
+          });
+        }
+
+        document.querySelectorAll(".del-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = Number(btn.dataset.id);
+            transactions = transactions.filter((t) => t.id !== id);
+            render();
+          });
+        });
+      }
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const desc = descInput.value.trim();
+        const amount = parseFloat(amountInput.value);
+        const category = categoryInput.value;
+        if (!desc || !amount || amount <= 0) return;
+
+        transactions.push({
+          id: idCounter++,
+          desc,
+          amount,
+          category,
+          type: currentType,
+        });
+
+        form.reset();
+        document
+          .querySelectorAll(".type-toggle button")
+          .forEach((b) => b.classList.remove("active"));
+        document.querySelector('[data-type="expense"]').classList.add("active");
+        currentType = "expense";
+        descInput.focus();
+        render();
+      });
+
+      // seed with a couple of example entries
+      transactions = [
+        {
+          id: idCounter++,
+          desc: "Monthly salary",
+          amount: 3200,
+          category: "Income",
+          type: "income",
+        },
+        {
+          id: idCounter++,
+          desc: "Groceries",
+          amount: 86.4,
+          category: "Food",
+          type: "expense",
+        },
+        {
+          id: idCounter++,
+          desc: "Metro pass",
+          amount: 45,
+          category: "Transport",
+          type: "expense",
+        },
+        {
+          id: idCounter++,
+          desc: "Rent",
+          amount: 1100,
+          category: "Housing",
+          type: "expense",
+        },
+      ];
+      render();
+    </script>
+  </body>
+</html>
